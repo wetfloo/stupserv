@@ -12,9 +12,9 @@ type argumentMap = map[string]argumentKey
 type exitCode = int
 
 type argValues struct {
-	noCache bool
-	addr    string
-	path    string
+	cache bool
+	addr  string
+	path  string
 }
 
 const usageMsg = `
@@ -26,13 +26,13 @@ PATH:
 
 OPTIONS:
 	-a, --addr:     address and port to listen on. By default set to :6040
-	-n, --no-cache: disables http cache. By default cache is used
+	-c, --cache:    enables http cache. By default cache is not used
 	-h, --help:     displays this message
 `
 
 const (
 	argAddr argumentKey = iota
-	argNoCache
+	argCache
 	argHelp
 )
 
@@ -45,12 +45,12 @@ const (
 )
 
 var arguments argumentMap = argumentMap{
-	"-a":         argAddr,
-	"--addr":     argAddr,
-	"-n":         argNoCache,
-	"--no-cache": argNoCache,
-	"-h":         argHelp,
-	"--help":     argHelp,
+	"-a":      argAddr,
+	"--addr":  argAddr,
+	"-c":      argCache,
+	"--cache": argCache,
+	"-h":      argHelp,
+	"--help":  argHelp,
 }
 
 func main() {
@@ -65,7 +65,7 @@ func main() {
 
 	fileServer := http.FileServer(http.Dir(args.path))
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if args.noCache {
+		if !args.cache {
 			w.Header().Set("Cache-Control", "no-cache")
 		}
 		fileServer.ServeHTTP(w, r)
@@ -104,8 +104,8 @@ func parseArgs() argValues {
 			} else {
 				printAndExit(exitInvalidArgs, true, "malformed args: couldn't parse address to listen on\n")
 			}
-		case argNoCache:
-			result.noCache = true
+		case argCache:
+			result.cache = true
 		case argHelp:
 			printAndExit(exitOk, true, "")
 		}

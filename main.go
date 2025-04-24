@@ -2,11 +2,14 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 	"os"
+	"path/filepath"
 )
 
 type argumentKey int
 type argumentMap = map[string]argumentKey
+type exitCode = int
 
 type argValues struct {
 	addr string
@@ -31,10 +34,11 @@ const (
 )
 
 const (
-	exitOk int = iota
+	exitOk exitCode = iota
 	exitNotADir
 	exitInvalidArgs
 	exitFileErr
+	exitHttpServerErr
 )
 
 var arguments argumentMap = argumentMap{
@@ -48,12 +52,14 @@ func main() {
 	args := parseArgs()
 	fileInfo, err := os.Stat(args.path)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v", err)
-		os.Exit(exitFileErr)
+		printAndExit(exitFileErr, false, "%v\n", err)
 	}
 	if !fileInfo.IsDir() {
-		fmt.Fprintf(os.Stderr, "provided path %s is not a directory\n")
-		os.Exit(exitNotADir)
+		printAndExit(exitNotADir, true, "%v\n", err)
+	}
+
+	if err := http.ListenAndServe(args.addr, http.FileServer(http.Dir(args.path))); err != nil {
+		printAndExit(exitHttpServerErr, false, "%v\n", err)
 	}
 }
 
@@ -61,18 +67,17 @@ func parseArgs() argValues {
 	args := os.Args[1:]
 	var result argValues
 
-	if len(args) > 1 {
-		result.path = os.Args[len(args)-1]
+	if len(args) >= 1 {
+		result.path = args[len(args)-1]
 	} else {
-		p, err := os.Executable()
+		ex, err := os.Executable()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "%v", err)
-			os.Exit(exitFileErr)
+			printAndExit(exitFileErr, false, "%v\n", err)
 		}
-		result.path = p
+		result.path = filepath.Dir(ex)
 	}
 
-	for i, arg := range args {
+	for i, arg := range args[:len(args)-1] {
 		argKey, ok := arguments[arg]
 		if !ok {
 			continue
@@ -84,15 +89,29 @@ func parseArgs() argValues {
 				result.addr = args[i+1]
 				continue
 			} else {
-				fmt.Fprint(os.Stderr, "malformed args: couldn't parse address to listen on\n")
-				fmt.Fprint(os.Stderr, usageMsg)
-				os.Exit(exitInvalidArgs)
+				printAndExit(exitInvalidArgs, true, "malformed args: couldn't parse address to listen on\n")
 			}
 		case argHelp:
-			fmt.Fprint(os.Stderr, usageMsg)
-			os.Exit(0)
+			printAndExit(exitOk, true, "")
 		}
 	}
 
+	if len(result.addr) == 0 {
+		result.addr = ":6040"
+	}
+
 	return result
+}
+
+func printAndExit(
+	code exitCode,
+	showUsage bool,
+	s string,
+	f ...any,
+) {
+	fmt.Fprintf(os.Stderr, s, f...)
+	if showUsage {
+		fmt.Fprint(os.Stderr, usageMsg)
+	}
+	os.Exit(code)
 }

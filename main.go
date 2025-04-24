@@ -12,8 +12,9 @@ type argumentMap = map[string]argumentKey
 type exitCode = int
 
 type argValues struct {
-	addr string
-	path string
+	noCache bool
+	addr    string
+	path    string
 }
 
 const usageMsg = `
@@ -24,12 +25,14 @@ PATH:
 	used to determine what directory will be served. Default is the current working directory
 
 OPTIONS:
-	-a, --addr: address and port to listen on. By default set to :6040
-	-h, --help: displays this message
+	-a, --addr:     address and port to listen on. By default set to :6040
+	-n, --no-cache: disables http cache. By default cache is used
+	-h, --help:     displays this message
 `
 
 const (
 	argAddr argumentKey = iota
+	argNoCache
 	argHelp
 )
 
@@ -42,10 +45,12 @@ const (
 )
 
 var arguments argumentMap = argumentMap{
-	"-a":     argAddr,
-	"--addr": argAddr,
-	"-h":     argHelp,
-	"--help": argHelp,
+	"-a":         argAddr,
+	"--addr":     argAddr,
+	"-n":         argNoCache,
+	"--no-cache": argNoCache,
+	"-h":         argHelp,
+	"--help":     argHelp,
 }
 
 func main() {
@@ -58,7 +63,15 @@ func main() {
 		printAndExit(exitNotADir, true, "%v\n", err)
 	}
 
-	if err := http.ListenAndServe(args.addr, http.FileServer(http.Dir(args.path))); err != nil {
+	fileServer := http.FileServer(http.Dir(args.path))
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if args.noCache {
+			w.Header().Set("Cache-Control", "no-cache")
+		}
+		fileServer.ServeHTTP(w, r)
+	})
+
+	if err := http.ListenAndServe(args.addr, nil); err != nil {
 		printAndExit(exitHttpServerErr, false, "%v\n", err)
 	}
 }
@@ -91,6 +104,8 @@ func parseArgs() argValues {
 			} else {
 				printAndExit(exitInvalidArgs, true, "malformed args: couldn't parse address to listen on\n")
 			}
+		case argNoCache:
+			result.noCache = true
 		case argHelp:
 			printAndExit(exitOk, true, "")
 		}

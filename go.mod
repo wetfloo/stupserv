@@ -1,3 +1,3 @@
-module go_http_server
+module stupserv
 
 go 1.24.2

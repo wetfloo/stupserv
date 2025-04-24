@@ -5,7 +5,15 @@ import (
 	"os"
 )
 
-const invalidArgsMsg = `
+type argumentKey int
+type argumentMap = map[string]argumentKey
+
+type argValues struct {
+	addr string
+	path string
+}
+
+const usageMsg = `
 usage:
 	stupserv [OPTIONS] [PATH]
 
@@ -17,33 +25,85 @@ OPTIONS:
 	-h, --help: displays this message
 `
 
-func main() {
-	for _, arg := range os.Args[1:] {
-		if arg == "-h" || arg == "--help" {
-			fmt.Fprint(os.Stderr, invalidArgsMsg)
-			os.Exit(0)
-		}
-	}
+const (
+	argAddr argumentKey = iota
+	argHelp
+)
 
-	var path string
-	if len(os.Args) > 2 {
-		path = os.Args[len(os.Args)-1]
+const (
+	exitOk int = iota
+	exitNotADir
+	exitInvalidArgs
+	exitFileErr
+)
+
+var arguments argumentMap = argumentMap{
+	"-a":     argAddr,
+	"--addr": argAddr,
+	"-h":     argHelp,
+	"--help": argHelp,
+}
+
+func main() {
+	args := parseArgs()
+	fileInfo, err := os.Stat(args.path)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%v", err)
+		os.Exit(exitFileErr)
+	}
+	if !fileInfo.IsDir() {
+		fmt.Fprintf(os.Stderr, "provided path %s is not a directory\n")
+		os.Exit(exitNotADir)
+	}
+}
+
+func parseArgs() argValues {
+	args := os.Args[1:]
+	var result argValues
+
+	if len(args) > 1 {
+		result.path = os.Args[len(args)-1]
 	} else {
 		p, err := os.Executable()
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "%v", err)
-			os.Exit(1)
+			os.Exit(exitFileErr)
 		}
-		path = p
+		result.path = p
 	}
 
-	fileInfo, err := os.Stat(path)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v", err)
-		os.Exit(1)
+	for i, arg := range args {
+		argKey, ok := arguments[arg]
+		if !ok {
+			if arg == result.path {
+				continue
+			}
+			if _, err := os.Stat(arg); err != nil {
+				fmt.Fprintf(os.Stderr, "path exists for the argument %s, but path had already been set, and is %s\n", result.path)
+				fmt.Fprint(os.Stderr, usageMsg)
+				os.Exit(exitInvalidArgs)
+			}
+
+			fmt.Fprintf(os.Stderr, "arg %s is not a valid argument\n", argKey)
+			fmt.Fprint(os.Stderr, usageMsg)
+			os.Exit(exitInvalidArgs)
+		}
+
+		switch argKey {
+		case argAddr:
+			if i < len(args)-1 {
+				result.addr = args[i+1]
+				continue
+			} else {
+				fmt.Fprint(os.Stderr, "malformed args: couldn't parse address to listen on\n")
+				fmt.Fprint(os.Stderr, usageMsg)
+				os.Exit(exitInvalidArgs)
+			}
+		case argHelp:
+			fmt.Fprint(os.Stderr, usageMsg)
+			os.Exit(0)
+		}
 	}
-	if !fileInfo.IsDir() {
-		fmt.Fprintf(os.Stderr, "provided path %s is not a directory")
-		os.Exit(2)
-	}
+
+	return result
 }

@@ -90,7 +90,7 @@ func parseArgs() argValues {
 		result.path = filepath.Dir(ex)
 	}
 
-	for i, arg := range args[:len(args)-1] {
+	for i, arg := range args[:max(len(args)-1, 0)] {
 		argKey, ok := arguments[arg]
 		if !ok {
 			continue

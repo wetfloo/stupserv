@@ -75,18 +75,7 @@ func parseArgs() argValues {
 	for i, arg := range args {
 		argKey, ok := arguments[arg]
 		if !ok {
-			if arg == result.path {
-				continue
-			}
-			if _, err := os.Stat(arg); err != nil {
-				fmt.Fprintf(os.Stderr, "path exists for the argument %s, but path had already been set, and is %s\n", result.path)
-				fmt.Fprint(os.Stderr, usageMsg)
-				os.Exit(exitInvalidArgs)
-			}
-
-			fmt.Fprintf(os.Stderr, "arg %s is not a valid argument\n", argKey)
-			fmt.Fprint(os.Stderr, usageMsg)
-			os.Exit(exitInvalidArgs)
+			continue
 		}
 
 		switch argKey {

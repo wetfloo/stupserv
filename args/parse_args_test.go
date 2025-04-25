@@ -17,10 +17,10 @@ func TestParseNoPath(t *testing.T) {
 	}
 	actual := args.ParseArgs()
 
-	testEqualAllButPath(t, expected, actual)
+	testEqualArgValues(t, expected, actual, false)
 }
 
-func testEqualAllButPath(t *testing.T, expected args.ArgValues, actual args.ArgValues) {
+func testEqualArgValues(t *testing.T, expected args.ArgValues, actual args.ArgValues, testPathEq bool) {
 	vExpected := reflect.ValueOf(expected)
 	vActual := reflect.ValueOf(actual)
 	typeExpected := vExpected.Type()
@@ -39,7 +39,7 @@ func testEqualAllButPath(t *testing.T, expected args.ArgValues, actual args.ArgV
 		nameActual := typeActual.Field(i).Name
 
 		assert.Equal(t, nameExpected, nameActual)
-		if strings.ToLower(nameExpected) == "path" {
+		if !testPathEq && strings.ToLower(nameExpected) == "path" {
 			continue
 		}
 

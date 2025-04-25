@@ -1,9 +1,10 @@
-http_server: gosrc
+stupserv: gosrc
 
 .PHONY: run
 	go run .
 
-gosrc: *.go
+.PHONY: gosrc
+gosrc
 	go build .
 
 .PHONY: test

@@ -20,7 +20,12 @@ func TestParseNoPath(t *testing.T) {
 	testEqualArgValues(t, expected, actual, false)
 }
 
-func testEqualArgValues(t *testing.T, expected args.ArgValues, actual args.ArgValues, testPathEq bool) {
+func testEqualArgValues(
+	t *testing.T,
+	expected args.ArgValues,
+	actual args.ArgValues,
+	testPathEq bool,
+) {
 	vExpected := reflect.ValueOf(expected)
 	vActual := reflect.ValueOf(actual)
 	typeExpected := vExpected.Type()

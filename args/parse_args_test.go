@@ -20,6 +20,48 @@ func TestParseNoPath(t *testing.T) {
 	testEqualArgValues(t, expected, actual, false)
 }
 
+func TestParseOnlyPath(t *testing.T) {
+	expected := args.Values{
+		Cache: false,
+		Addr:  ":6040",
+		Path:  "/some/path",
+	}
+	actual := args.ParseArgs([]string{expected.Path})
+
+	testEqualArgValues(t, expected, actual, true)
+}
+
+func TestParseCacheAddr(t *testing.T) {
+	expected := args.Values{
+		Cache: false,
+		Addr:  "127.0.0.1:1337",
+	}
+	actual := args.ParseArgs([]string{"-c", "-a", expected.Addr})
+
+	testEqualArgValues(t, expected, actual, false)
+}
+
+func TestParseCacheAddrPath(t *testing.T) {
+	expected := args.Values{
+		Cache: false,
+		Addr:  "127.0.0.1:1337",
+		Path:  "/some/path",
+	}
+	actual := args.ParseArgs([]string{"-c", "-a", expected.Addr, expected.Path})
+
+	testEqualArgValues(t, expected, actual, true)
+}
+
+func TestParseCacheAddrMalformed(t *testing.T) {
+	expected := args.Values{
+		Cache: false,
+		Addr:  "127.0.0.1:1337",
+	}
+	actual := args.ParseArgs([]string{expected.Path, "-c", "-a", expected.Addr})
+
+	testEqualArgValues(t, expected, actual, true)
+}
+
 func testEqualArgValues(
 	t *testing.T,
 	expected args.Values,

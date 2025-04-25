@@ -15,7 +15,7 @@ func TestParseNoPath(t *testing.T) {
 		Cache: false,
 		Addr:  ":6040",
 	}
-	actual := args.ParseArgs()
+	actual := args.ParseArgs([]string{})
 
 	testEqualArgValues(t, expected, actual, false)
 }

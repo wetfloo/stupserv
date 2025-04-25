@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	args := args.ParseArgs()
+	args := args.ParseArgs(os.Args[1:])
 	fileInfo, err := os.Stat(args.Path)
 	if err != nil {
 		common.PrintAndExit(common.ExitFileErr, false, "%v\n", err)

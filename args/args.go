@@ -31,8 +31,7 @@ var arguments argumentMap = argumentMap{
 	"--help":  argHelp,
 }
 
-func ParseArgs() ArgValues {
-	args := os.Args[1:]
+func ParseArgs(args []string) ArgValues {
 	var result ArgValues
 
 	if len(args) >= 1 {

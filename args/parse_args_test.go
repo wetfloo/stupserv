@@ -11,7 +11,7 @@ import (
 )
 
 func TestParseNoPath(t *testing.T) {
-	expected := args.ArgValues{
+	expected := args.Values{
 		Cache: false,
 		Addr:  ":6040",
 	}
@@ -22,8 +22,8 @@ func TestParseNoPath(t *testing.T) {
 
 func testEqualArgValues(
 	t *testing.T,
-	expected args.ArgValues,
-	actual args.ArgValues,
+	expected args.Values,
+	actual args.Values,
 	testPathEq bool,
 ) {
 	vExpected := reflect.ValueOf(expected)

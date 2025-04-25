@@ -10,7 +10,7 @@ import (
 type argumentKey int
 type argumentMap = map[string]argumentKey
 
-type ArgValues struct {
+type Values struct {
 	Cache bool
 	Addr  string
 	Path  string
@@ -31,8 +31,8 @@ var arguments argumentMap = argumentMap{
 	"--help":  argHelp,
 }
 
-func ParseArgs(args []string) ArgValues {
-	var result ArgValues
+func ParseArgs(args []string) Values {
+	var result Values
 
 	if len(args) >= 1 {
 		result.Path = args[len(args)-1]
